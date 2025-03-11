@@ -31,10 +31,10 @@
 #define SC_SCDA_GLOBAL_ARRAY_COUNT 12
 #define SC_SCDA_ARRAY_SIZE 3
 
-static inline size_t
+static inline       size_t
 test_scda_partition_cut (size_t global_num, int p, int num_procs)
 {
-  size_t            result;
+  size_t              result;
 
   SC_ASSERT (0 <= p && p <= num_procs);
 
@@ -51,7 +51,7 @@ test_scda_partition_cut (size_t global_num, int p, int num_procs)
   return result;
 }
 
-/** A brief demonstration of scda usage.
+/** A brief demonstration of writing a parallel array using scda.
  *
  * \param [in]  mpicomm  The MPI communicator to use for parallel I/O.
  * \param [in]  N        Number of indices written to disk.
@@ -61,17 +61,17 @@ test_scda_partition_cut (size_t global_num, int p, int num_procs)
 static int
 test_scda_demonstration (sc_MPI_Comm mpicomm, size_t N)
 {
-  int mpiret;
-  int mpisize, mpirank;
-  int i;
-  size_t first, next;
-  size_t si, local_idx;
-  size_t elem_size;
-  sc_array_t local_data;
-  sc_array_t elem_counts;
-  const char *filename  = "scda_demo.scd"; /* TODO: Adjust make clean */
+  int                 mpiret;
+  int                 mpisize, mpirank;
+  int                 i;
+  size_t              first, next;
+  size_t              si, local_idx;
+  size_t              elem_size;
+  sc_array_t          local_data;
+  sc_array_t          elem_counts;
+  const char         *filename = "scda_demo.scd";
   sc_scda_fcontext_t *fc;
-  sc_scda_ferror_t errcode;
+  sc_scda_ferror_t    errcode;
 
   /* create synthetic data in parallel, i.e. parallel distributed indices */
 
@@ -99,8 +99,8 @@ test_scda_demonstration (sc_MPI_Comm mpicomm, size_t N)
                        (size_t) mpisize);
   for (i = 0; i < mpisize; ++i) {
     *(sc_scda_ulong *) sc_array_index_int (&elem_counts, i) =
-          test_scda_partition_cut (N, i + 1, mpisize) -
-          test_scda_partition_cut (N, i, mpisize);
+      test_scda_partition_cut (N, i + 1, mpisize) -
+      test_scda_partition_cut (N, i, mpisize);
   }
 
   /* now start the actual scda demonstration */
