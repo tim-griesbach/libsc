@@ -31,6 +31,111 @@
 #define SC_SCDA_GLOBAL_ARRAY_COUNT 12
 #define SC_SCDA_ARRAY_SIZE 3
 
+static inline size_t
+test_scda_partition_cut (size_t global_num, int p, int num_procs)
+{
+  size_t            result;
+
+  SC_ASSERT (0 <= p && p <= num_procs);
+
+  if (p == num_procs) {
+    /* prevent roundoff error and division by zero */
+    return global_num;
+  }
+
+  result = (size_t)
+    (((long double) global_num * (double) p) / (double) num_procs);
+
+  SC_ASSERT (result <= global_num);
+
+  return result;
+}
+
+/** A brief demonstration of scda usage.
+ *
+ * \param [in]  mpicomm  The MPI communicator to use for parallel I/O.
+ * \param [in]  N        Number of indices written to disk.
+ * \return               0 in case of success,
+ *                       -1 in case of an error.
+ */
+static int
+test_scda_demonstration (sc_MPI_Comm mpicomm, size_t N)
+{
+  int mpiret;
+  int mpisize, mpirank;
+  int i;
+  size_t first, next;
+  size_t si, local_idx;
+  size_t elem_size;
+  sc_array_t local_data;
+  sc_array_t elem_counts;
+  const char *filename  = "scda_demo.scd"; /* TODO: Adjust make clean */
+  sc_scda_fcontext_t *fc;
+  sc_scda_ferror_t errcode;
+
+  /* create synthetic data in parallel, i.e. parallel distributed indices */
+
+  /* retrieve MPI information */
+  mpiret = sc_MPI_Comm_size (mpicomm, &mpisize);
+  SC_CHECK_MPI (mpiret);
+
+  mpiret = sc_MPI_Comm_rank (mpicomm, &mpirank);
+  SC_CHECK_MPI (mpiret);
+
+  /* determine local part of the data */
+  first = test_scda_partition_cut (N, mpirank, mpisize);
+  next = test_scda_partition_cut (N, mpirank + 1, mpisize);
+
+  /* get local part of the data */
+  sc_array_init_count (&local_data, sizeof (size_t), next - first);
+  local_idx = 0;
+  for (si = first; si < next; ++si) {
+    printf ("%lu\n", local_idx);
+    *((size_t *) sc_array_index (&local_data, local_idx++)) = si;
+  }
+
+  /* compute the partition information */
+  sc_array_init_count (&elem_counts, sizeof (sc_scda_ulong),
+                       (size_t) mpisize);
+  for (i = 0; i < mpisize; ++i) {
+    *(sc_scda_ulong *) sc_array_index_int (&elem_counts, i) =
+          test_scda_partition_cut (N, i + 1, mpisize) -
+          test_scda_partition_cut (N, i, mpisize);
+  }
+
+  /* now start the actual scda demonstration */
+
+  /* open a file for writing */
+  if ((fc = sc_scda_fopen_write (mpicomm, filename, "scda demonstration file",
+                                 NULL, NULL, &errcode)) == NULL) {
+    /* an error occurred */
+    return -1;
+  }
+
+  /* byte count per array element */
+  elem_size = sizeof (size_t);
+
+  /* write the array to the file */
+  if (sc_scda_fwrite_array (fc, "parallel-distrbuted array", NULL,
+                            &local_data, &elem_counts, elem_size, 0,
+                            0, &errcode) == NULL) {
+    /* an error occurred */
+    return -1;
+  }
+
+  /* clean up */
+  sc_array_reset (&elem_counts);
+  sc_array_reset (&local_data);
+
+  /* close the file */
+  if (sc_scda_fclose (fc, &errcode)) {
+    /* an error occurred */
+    return -1;
+  }
+
+  return 0;
+}
+
 static void
 test_scda_skip_through_file (sc_MPI_Comm mpicomm, const char *filename,
                              sc_scda_params_t *params, int mpirank,
@@ -543,6 +648,9 @@ main (int argc, char **argv)
     sc_options_print_usage (sc_package_id, SC_LP_ERROR, opt, NULL);
     return 1;
   }
+
+  SC_CHECK_ABORT (test_scda_demonstration (mpicomm, 12) == 0,
+                  "demonstration test");
 
   /* Test checking of non-collective fuzzy parameters. */
   mpiret = sc_MPI_Comm_rank (mpicomm, &mpirank);
