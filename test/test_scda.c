@@ -27,6 +27,7 @@
 #ifdef SC_ENABLE_FILE_CHECKS
 #define SC_SCDA_FILE_EXT "scd"
 #define SC_SCDA_TEST_FILE "sc_test_scda." SC_SCDA_FILE_EXT
+#define SC_SCDA_DEMO_FILE "scda_demo." SC_SCDA_FILE_EXT
 
 #define SC_SCDA_GLOBAL_ARRAY_COUNT 12
 #define SC_SCDA_ARRAY_SIZE 3
@@ -69,7 +70,7 @@ test_scda_demonstration (sc_MPI_Comm mpicomm, size_t N)
   size_t              elem_size;
   sc_array_t          local_data;
   sc_array_t          elem_counts;
-  const char         *filename = "scda_demo.scd";
+  const char         *filename = SC_SCDA_DEMO_FILE;
   sc_scda_fcontext_t *fc;
   sc_scda_ferror_t    errcode;
 
@@ -103,7 +104,7 @@ test_scda_demonstration (sc_MPI_Comm mpicomm, size_t N)
       test_scda_partition_cut (N, i, mpisize);
   }
 
-  /* now start the actual scda demonstration */
+  /* start the actual scda demonstration */
 
   /* open a file for writing */
   if ((fc = sc_scda_fopen_write (mpicomm, filename, "scda demonstration file",
@@ -116,7 +117,7 @@ test_scda_demonstration (sc_MPI_Comm mpicomm, size_t N)
   elem_size = sizeof (size_t);
 
   /* write the array to the file */
-  if (sc_scda_fwrite_array (fc, "parallel-distrbuted array", NULL,
+  if (sc_scda_fwrite_array (fc, "parallel-distributed array", NULL,
                             &local_data, &elem_counts, elem_size, 0,
                             0, &errcode) == NULL) {
     /* an error occurred */
