@@ -308,6 +308,9 @@ main (int argc, char **argv)
   int mpiret;
   sc_camera_t      *camera;
 
+  mpiret = sc_MPI_Init (&argc, &argv);
+  SC_CHECK_MPI (mpiret);
+
   sc_init (sc_MPI_COMM_WORLD, 0, 1, NULL, SC_LP_DEFAULT);
 
   camera = sc_camera_new();
