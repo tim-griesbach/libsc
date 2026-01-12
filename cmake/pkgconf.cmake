@@ -23,7 +23,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${pc_filename}
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 set(pc_target ${pc_filename})
-set(pc_link ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkgconfig/libsc.pc)
+set(pc_link ${CMAKE_INSTALL_LIBDIR}/pkgconfig/libsc.pc)
 
 install(CODE "
     file(CREATE_LINK ${pc_target} \${CMAKE_INSTALL_PREFIX}/${pc_link} SYMBOLIC)
